@@ -109,6 +109,11 @@
         .claim-btn:active { transform: scale(.97); }
         /* 弹窗：矮屏/横屏时内部滚动，防止溢出 */
         .modal-panel { max-height: 86vh; max-height: 86dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        /* 分享面板：底部滑入 */
+        .share-panel { animation: shareUp .28s cubic-bezier(.22,1,.36,1); }
+        @keyframes shareUp { from { transform: translateY(80px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .share-plat:active { transform: scale(.92); }
+        #share-link-input, #guide-link-input { min-width: 0; }
         @media (pointer: coarse) {
             /* iOS 聚焦输入框 ≥16px 才不会自动放大页面 */
             #game-id-input, #server-filter, #main-region-select, #sub-server-select { font-size: 16px; }
@@ -531,8 +536,84 @@
             </div>
 
             <button onclick="submitClaim()" class="w-full bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-500 text-black font-extrabold py-3 rounded-xl shadow-lg hover:brightness-110 transition text-sm">
-                立即确认并免费领取点券
+                立即分享免费领取
             </button>
+        </div>
+    </div>
+
+    <!-- 分享面板：微信 / QQ / 抖音 / 小红书（分享成功后弹下载 APP） -->
+    <div id="share-sheet" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] hidden flex items-end justify-center">
+        <div class="share-panel bg-[#1c0c3d] border border-yellow-500/40 w-full max-w-sm rounded-t-3xl p-5 relative shadow-2xl safe-pb">
+            <button onclick="closeShareSheet()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-lg">✕</button>
+            <div class="text-center mb-4">
+                <h3 class="text-base font-bold text-yellow-300 mb-1">分享后立即领取</h3>
+                <p class="text-[11px] text-purple-300 leading-relaxed">把【<b id="share-game-name" class="text-yellow-400">王者荣耀</b>】<b id="share-game-value" class="text-yellow-400">12960点券</b> 礼包分享给好友，好友通过分享卡片即可查看，分享后即可下载 APP 领奖</p>
+            </div>
+            <div class="grid grid-cols-4 gap-2 mb-4">
+                <button onclick="shareTo('wechat')" class="share-plat flex flex-col items-center gap-1.5 py-2 rounded-xl transition">
+                    <span class="w-11 h-11 rounded-2xl bg-[#07c160] flex items-center justify-center shadow-lg shadow-green-900/40">
+                        <svg viewBox="0 0 24 24" class="w-6 h-6" fill="#fff"><path d="M8.7 4C4.9 4 2 6.5 2 9.6c0 1.7.9 3.2 2.4 4.3l-.7 2.3 2.6-1.3c.7.2 1.5.3 2.3.3h.5a5.2 5.2 0 0 1-.2-1.4c0-3 2.9-5.4 6.5-5.4h.6C15.6 5.8 12.5 4 8.7 4zM6.3 7.3a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm4.8 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2zM15.6 9.7c-3.1 0-5.6 2-5.6 4.6s2.5 4.6 5.6 4.6c.7 0 1.3-.1 1.9-.3l2.4 1.2-.5-1.9c1.2-.8 2-2.1 2-3.5 0-2.6-2.4-4.7-5.5-4.7h-.3zm-2 2.7a.85.85 0 1 1 0 1.7.85.85 0 0 1 0-1.7zm4 0a.85.85 0 1 1 0 1.7.85.85 0 0 1 0-1.7z"/></svg>
+                    </span>
+                    <span class="text-[11px] text-purple-100">微信</span>
+                </button>
+                <button onclick="shareTo('qq')" class="share-plat flex flex-col items-center gap-1.5 py-2 rounded-xl transition">
+                    <span class="w-11 h-11 rounded-2xl bg-[#12b7f5] flex items-center justify-center shadow-lg shadow-sky-900/40">
+                        <svg viewBox="0 0 24 24" class="w-6 h-6" fill="#fff"><path d="M12 2c-3.2 0-5.8 2.6-5.8 5.8 0 .9-.4 1.6-.9 2.5-.8 1.4-1.5 3-1.5 4.3 0 .8.4 1.4 1 1.7.1 1.5.8 2.7 1.9 3.4-.3.3-.6.7-.6 1 0 .8 1.2 1.5 2.9 1.5 1.3 0 2.4-.4 2.8-1h.4c.4.6 1.5 1 2.8 1 1.7 0 2.9-.7 2.9-1.5 0-.3-.3-.7-.6-1 1.1-.7 1.8-1.9 1.9-3.4.6-.3 1-.9 1-1.7 0-1.3-.7-2.9-1.5-4.3-.5-.9-.9-1.6-.9-2.5C17.8 4.6 15.2 2 12 2zM9.7 7.5a1.05 1.05 0 1 1 0 2.1 1.05 1.05 0 0 1 0-2.1zm4.6 0a1.05 1.05 0 1 1 0 2.1 1.05 1.05 0 0 1 0-2.1z"/></svg>
+                    </span>
+                    <span class="text-[11px] text-purple-100">QQ</span>
+                </button>
+                <button onclick="shareTo('douyin')" class="share-plat flex flex-col items-center gap-1.5 py-2 rounded-xl transition">
+                    <span class="w-11 h-11 rounded-2xl bg-[#161823] flex items-center justify-center shadow-lg shadow-black/50">
+                        <svg viewBox="0 0 24 24" class="w-6 h-6" fill="#fff"><path d="M16.6 3c.4 2.1 1.7 3.5 3.9 3.9v3.1c-1.5 0-2.9-.5-4-1.3v5.7c0 3.4-2.2 5.6-5.2 5.6s-5.2-2.2-5.2-5.2c0-3 2.1-5 4.9-5.2v3.2c-.4-.1-.8-.2-1.2-.2-1.1 0-1.9.8-1.9 1.8s.8 1.9 1.9 1.9 1.9-.8 1.9-2V3h3.3z"/></svg>
+                    </span>
+                    <span class="text-[11px] text-purple-100">抖音</span>
+                </button>
+                <button onclick="shareTo('xhs')" class="share-plat flex flex-col items-center gap-1.5 py-2 rounded-xl transition">
+                    <span class="w-11 h-11 rounded-2xl bg-[#ff2442] flex items-center justify-center shadow-lg shadow-red-900/40">
+                        <svg viewBox="0 0 24 24" class="w-6 h-6" fill="#fff"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm2.5 4v2h9V7h-9zm0 4v2h9v-2h-9zm0 4v2h5.5v-2H7.5z"/></svg>
+                    </span>
+                    <span class="text-[11px] text-purple-100">小红书</span>
+                </button>
+            </div>
+            <div class="flex items-center gap-2 bg-black/50 border border-purple-500/30 rounded-xl px-3 py-2 mb-1">
+                <input id="share-link-input" readonly class="flex-1 bg-transparent text-[11px] text-purple-200 outline-none" value="">
+                <button onclick="copyShareLink(false)" class="shrink-0 text-[11px] font-bold text-yellow-300 px-2 py-1 rounded-lg bg-yellow-400/15 active:scale-95 transition">复制链接</button>
+            </div>
+            <button onclick="finishShare()" class="w-full mt-3 bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-500 text-black font-extrabold py-3 rounded-xl shadow-lg active:scale-95 transition text-sm">我已完成分享，去领取</button>
+        </div>
+    </div>
+
+    <!-- 分享引导：无直接 scheme 的平台，复制链接去对应 App 分享 -->
+    <div id="share-guide" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-[65] hidden flex items-center justify-center p-6">
+        <div class="modal-panel bg-[#1c0c3d] border border-purple-500/40 w-full max-w-xs rounded-3xl p-5 relative shadow-2xl text-center">
+            <button onclick="closeShareGuide()" class="absolute top-3 right-4 text-gray-400 hover:text-white">✕</button>
+            <div id="guide-icon" class="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center text-xl font-extrabold text-white">微</div>
+            <h3 id="guide-title" class="text-sm font-bold text-white mb-1">分享到微信</h3>
+            <p class="text-[11px] text-purple-300 mb-3 leading-relaxed">① 点击下方"复制链接"<br>② 打开 <b id="guide-app" class="text-yellow-400">微信</b>，粘贴发送给好友或群聊<br>③ 好友打开链接即可看到礼包分享卡片</p>
+            <div class="flex items-center gap-2 bg-black/50 border border-purple-500/30 rounded-xl px-3 py-2 mb-3">
+                <input id="guide-link-input" readonly class="flex-1 bg-transparent text-[11px] text-purple-200 outline-none">
+                <button onclick="copyShareLink(true)" class="shrink-0 text-[11px] font-bold text-yellow-300 px-2 py-1 rounded-lg bg-yellow-400/15 active:scale-95 transition">复制链接</button>
+            </div>
+            <button onclick="finishShare()" class="w-full bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-500 text-black font-extrabold py-2.5 rounded-xl shadow-lg active:scale-95 transition text-sm">我已完成分享，去领取</button>
+        </div>
+    </div>
+
+    <!-- 分享完成 → 下载 APP 立即领取 -->
+    <div id="download-modal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-[70] hidden flex items-center justify-center p-4">
+        <div class="modal-panel bg-[#1c0c3d] border border-yellow-500/40 w-full max-w-sm rounded-3xl p-6 relative shadow-2xl text-center">
+            <button onclick="closeDownloadModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-lg">✕</button>
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 mx-auto mb-3 flex items-center justify-center shadow-lg shadow-amber-900/40">
+                <svg viewBox="0 0 24 24" class="w-9 h-9" fill="#1c0c3d"><path d="M20 7h-2.1a2.9 2.9 0 0 0-2.4-2.8A2.4 2.4 0 0 0 13 6.5h-2a2.4 2.4 0 0 0-2.5-2.3A2.9 2.9 0 0 0 6.1 7H4a1 1 0 0 0-1 1v3h1v8A1.5 1.5 0 0 0 5.5 20.5h13a1.5 1.5 0 0 0 1.5-1.5v-8h1V8a1 1 0 0 0-1-1zM6.5 6.2c.6 0 1 .4 1 1s-.4 1-1 1-1-.4-1-1 .4-1 1-1zm11 0c.6 0 1 .4 1 1s-.4 1-1 1-1-.4-1-1 .4-1 1-1zM5 12h5.5v6H6.5A1.5 1.5 0 0 1 5 16.5V12zm7.5 0H19v4.5a1.5 1.5 0 0 1-1.5 1.5h-5V12z"/></svg>
+            </div>
+            <h3 class="text-base font-bold text-yellow-300 mb-1">分享成功！</h3>
+            <p class="text-xs text-purple-300 mb-4 leading-relaxed">下载 <b class="text-yellow-400">游戏福利中心 APP</b><br>【<b id="download-game-name">王者荣耀</b>】<b id="download-game-value">12960点券</b> 礼包自动发放到账</p>
+            <ul class="text-left text-[11px] text-purple-200 space-y-1.5 mb-5">
+                <li>✅ 登录游戏秒到账，无需人工等待</li>
+                <li>✅ 每日签到领点券，专属用户特权</li>
+                <li>✅ 20 款热门手游礼包持续更新</li>
+            </ul>
+            <a id="download-btn" href="#" target="_blank" rel="noopener" class="block w-full bg-gradient-to-r from-green-400 to-emerald-500 text-black font-extrabold py-3 rounded-xl shadow-lg active:scale-95 transition text-sm">立即下载 APP 领取</a>
+            <button onclick="closeDownloadModal()" class="w-full mt-2 text-[11px] text-purple-400 py-2">暂不领取</button>
         </div>
     </div>
 
@@ -628,11 +709,102 @@
         function submitClaim() {
             const gameId = document.getElementById('game-id-input').value.trim();
             if (!gameId) { alert('请填写您的游戏名字或角色ID！'); return; }
-            const mainRegion = document.getElementById('main-region-select').selectedOptions[0].text;
-            const subServer = document.getElementById('sub-server-select').value;
-            alert('【提交成功】\n\n游戏名字：' + currentGameName + '\n服务大区：' + mainRegion + '\n具体区名：' + subServer + '\n游戏玩家ID/名字：' + gameId + '\n礼包价值：' + (gameValues[currentGameName] || '') + '\n\n福利正在安排发放，请登录游戏查收！');
+            /* 校验通过 → 打开分享面板（分享完成后下载 APP 领取） */
+            openShareSheet();
+        }
+
+        /* ===== 分享：微信 / QQ / 抖音 / 小红书（OG 预览 + 下载弹窗） ===== */
+        const SHARE_BASE = 'https://qimeng6668888-dotcom.github.io/game-welfare-center/share/';
+        const GAME_SLUGS = {"王者荣耀": "wangzherongyao", "和平精英": "hepingjingying", "火影忍者手游": "huoyingrenzhe", "英雄联盟手游": "lolm", "三角洲行动": "sanjiaozhou", "无畏契约：源能行动": "wuyueqiyue", "金铲铲之战": "jinchanchan", "王者万象棋": "wangzhewanxiangqi", "FC足球世界": "fcshijie", "原神": "yuanshen", "崩坏：星穹铁道": "xingqiong", "蛋仔派对": "danzaipaidui", "第五人格": "diwurenge", "梦幻西游手游": "menghuanxilu", "鸣潮": "mingchao", "超自然行动组": "chaoziran", "无尽冬日": "wujindongri", "开心消消乐": "kaixianxiaole", "捕鱼大作战": "buyudazuozhan", "我的花园世界": "wodehuayuan"};
+        const PLATFORM_NAMES = { wechat: '微信', qq: 'QQ', douyin: '抖音', xhs: '小红书' };
+        const PLATFORM_GLYPHS = { wechat: '微', qq: 'Q', douyin: '抖', xhs: '书' };
+        const PLATFORM_COLORS = { wechat: '#07c160', qq: '#12b7f5', douyin: '#161823', xhs: '#ff2442' };
+
+        /* 每产品的 OG 分享元数据（链接/标题/描述/封面） */
+        function shareMeta(gameName) {
+            const slug = GAME_SLUGS[gameName] || 'index';
+            const value = gameValues[gameName] || '豪华';
+            return {
+                url: SHARE_BASE + slug + '.html',
+                icon: SHARE_BASE.replace('/share/', '/assets/icons/') + slug + '.jpg',
+                title: '【' + gameName + '】' + value + '礼包免费送！',
+                desc: '我在游戏福利中心发现【' + gameName + '】' + value + '豪华礼包，分享即可领取，登录游戏秒到账，快来一起！'
+            };
+        }
+
+        function openShareSheet() {
+            const meta = shareMeta(currentGameName);
+            document.getElementById('share-game-name').innerText = currentGameName;
+            document.getElementById('share-game-value').innerText = gameValues[currentGameName] || '';
+            document.getElementById('share-link-input').value = meta.url;
+            document.getElementById('guide-link-input').value = meta.url;
+            document.getElementById('download-game-name').innerText = currentGameName;
+            document.getElementById('download-game-value').innerText = gameValues[currentGameName] || '';
+            document.getElementById('download-btn').href = meta.url;
+            document.getElementById('share-sheet').classList.remove('hidden');
+        }
+
+        function closeShareSheet() {
+            document.getElementById('share-sheet').classList.add('hidden');
+            closeShareGuide();
+        }
+
+        /* 平台分享：QQ/抖音尝试原生 scheme 唤起，未唤起则回退引导；微信/小红书走引导 */
+        function shareTo(platform) {
+            const meta = shareMeta(currentGameName);
+            if (platform === 'qq') {
+                if (typeof location !== 'undefined') location.href = 'mqqapi://share/to_fri?src_type=web&version=1&file_type=infourl&share_id=1101683063&url=' + encodeURIComponent(meta.url) + '&title=' + encodeURIComponent(meta.title) + '&description=' + encodeURIComponent(meta.desc) + '&previewimageUrl=' + encodeURIComponent(meta.icon);
+                setTimeout(function () { if (!document.hidden) showShareGuide(platform); }, 1800);
+            } else if (platform === 'douyin') {
+                if (typeof location !== 'undefined') location.href = 'snssdk1128://forward?url=' + encodeURIComponent(meta.url) + '&title=' + encodeURIComponent(meta.title);
+                setTimeout(function () { if (!document.hidden) showShareGuide(platform); }, 1800);
+            } else {
+                showShareGuide(platform);
+            }
+        }
+
+        function showShareGuide(platform) {
+            document.getElementById('guide-title').innerText = '分享到' + PLATFORM_NAMES[platform];
+            document.getElementById('guide-app').innerText = PLATFORM_NAMES[platform];
+            const icon = document.getElementById('guide-icon');
+            icon.innerText = PLATFORM_GLYPHS[platform];
+            icon.style.background = PLATFORM_COLORS[platform];
+            document.getElementById('share-guide').classList.remove('hidden');
+        }
+
+        function closeShareGuide() {
+            document.getElementById('share-guide').classList.add('hidden');
+        }
+
+        function copyShareLink(fromGuide) {
+            const input = document.getElementById(fromGuide ? 'guide-link-input' : 'share-link-input');
+            const btn = input.parentNode.querySelector('button');
+            const flash = ok => {
+                const old = btn.innerText;
+                btn.innerText = ok ? '已复制 ✓' : '复制失败';
+                setTimeout(function () { btn.innerText = old; }, 1500);
+            };
+            const legacy = () => {
+                input.select(); input.setSelectionRange(0, 99999);
+                let ok = false;
+                try { ok = document.execCommand('copy'); } catch (e) {}
+                flash(ok);
+            };
+            if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(input.value).then(() => flash(true), legacy);
+            } else legacy();
+        }
+
+        /* 分享完成 → 关闭表单与分享层，弹出下载 APP */
+        function finishShare() {
+            closeShareSheet();
             closeModal();
             document.getElementById('game-id-input').value = '';
+            document.getElementById('download-modal').classList.remove('hidden');
+        }
+
+        function closeDownloadModal() {
+            document.getElementById('download-modal').classList.add('hidden');
         }
 
         /* ===== 实时领取记录（无缝持续向上滚动 + 动态更新） ===== */
