@@ -547,7 +547,7 @@
             <button onclick="closeShareSheet()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-lg">✕</button>
             <div class="text-center mb-4">
                 <h3 class="text-base font-bold text-yellow-300 mb-1">分享后立即领取</h3>
-                <p class="text-[11px] text-purple-300 leading-relaxed">把【<b id="share-game-name" class="text-yellow-400">王者荣耀</b>】<b id="share-game-value" class="text-yellow-400">12960点券</b> 礼包分享给好友，好友通过分享卡片即可查看，分享后即可下载 APP 领奖</p>
+                <p class="text-[11px] text-purple-300 leading-relaxed">点击下方平台图标，<b class="text-yellow-400">唤起对应 App 原生分享</b>，把【<b id="share-game-name" class="text-yellow-400">王者荣耀</b>】<b id="share-game-value" class="text-yellow-400">12960点券</b> 礼包卡片分享给好友，分享成功后即可下载 APP 领奖</p>
             </div>
             <div class="grid grid-cols-4 gap-2 mb-4">
                 <button onclick="shareTo('wechat')" class="share-plat flex flex-col items-center gap-1.5 py-2 rounded-xl transition">
@@ -583,13 +583,13 @@
         </div>
     </div>
 
-    <!-- 分享引导：无直接 scheme 的平台，复制链接去对应 App 分享 -->
+    <!-- 分享引导：当前环境无法唤起原生 App 时的兜底（复制链接手动分享） -->
     <div id="share-guide" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-[65] hidden flex items-center justify-center p-6">
         <div class="modal-panel bg-[#1c0c3d] border border-purple-500/40 w-full max-w-xs rounded-3xl p-5 relative shadow-2xl text-center">
             <button onclick="closeShareGuide()" class="absolute top-3 right-4 text-gray-400 hover:text-white">✕</button>
             <div id="guide-icon" class="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center text-xl font-extrabold text-white">微</div>
             <h3 id="guide-title" class="text-sm font-bold text-white mb-1">分享到微信</h3>
-            <p class="text-[11px] text-purple-300 mb-3 leading-relaxed">① 点击下方"复制链接"<br>② 打开 <b id="guide-app" class="text-yellow-400">微信</b>，粘贴发送给好友或群聊<br>③ 好友打开链接即可看到礼包分享卡片</p>
+            <p class="text-[11px] text-purple-300 mb-3 leading-relaxed">当前环境无法直接唤起 App 分享，请手动分享：<br>① 点击下方"复制链接"<br>② 打开 <b id="guide-app" class="text-yellow-400">微信</b>，粘贴发送给好友或群聊<br>③ 好友打开链接即可看到礼包分享卡片</p>
             <div class="flex items-center gap-2 bg-black/50 border border-purple-500/30 rounded-xl px-3 py-2 mb-3">
                 <input id="guide-link-input" readonly class="flex-1 bg-transparent text-[11px] text-purple-200 outline-none">
                 <button onclick="copyShareLink(true)" class="shrink-0 text-[11px] font-bold text-yellow-300 px-2 py-1 rounded-lg bg-yellow-400/15 active:scale-95 transition">复制链接</button>
@@ -749,18 +749,60 @@
             closeShareGuide();
         }
 
-        /* 平台分享：QQ/抖音尝试原生 scheme 唤起，未唤起则回退引导；微信/小红书走引导 */
+        /* 平台分享：优先唤起原生 App 分享
+           1) navigator.share → 系统原生分享面板（含微信/QQ/抖音/小红书等已装 App），分享成功即领奖
+           2) QQ/抖音有原生分享 scheme，优先直达对应 App 分享界面，未唤起回退系统面板
+           3) 都不支持（PC/微信内置浏览器）→ 引导浮层复制链接 */
         function shareTo(platform) {
             const meta = shareMeta(currentGameName);
-            if (platform === 'qq') {
-                if (typeof location !== 'undefined') location.href = 'mqqapi://share/to_fri?src_type=web&version=1&file_type=infourl&share_id=1101683063&url=' + encodeURIComponent(meta.url) + '&title=' + encodeURIComponent(meta.title) + '&description=' + encodeURIComponent(meta.desc) + '&previewimageUrl=' + encodeURIComponent(meta.icon);
-                setTimeout(function () { if (!document.hidden) showShareGuide(platform); }, 1800);
-            } else if (platform === 'douyin') {
-                if (typeof location !== 'undefined') location.href = 'snssdk1128://forward?url=' + encodeURIComponent(meta.url) + '&title=' + encodeURIComponent(meta.title);
-                setTimeout(function () { if (!document.hidden) showShareGuide(platform); }, 1800);
-            } else {
-                showShareGuide(platform);
+            const shareData = { title: meta.title, text: meta.desc, url: meta.url };
+            if (platform === 'qq' || platform === 'douyin') {
+                nativeSchemeShare(platform, meta);
+                return;
             }
+            systemShare(shareData, function () { nativeSchemeShare(platform, meta); });
+        }
+
+        /* 系统原生分享面板（navigator.share）：真·唤起原生 App 分享 */
+        function systemShare(data, onFail) {
+            if (typeof navigator !== 'undefined' && navigator.share) {
+                try {
+                    navigator.share(data).then(function () {
+                        finishShare(); /* 分享成功 → 下载 APP 领取 */
+                    }).catch(function (err) {
+                        if (err && err.name === 'AbortError') return; /* 用户取消，停留面板 */
+                        if (onFail) onFail();
+                        else showShareGuide(currentSharePlatform);
+                    });
+                } catch (e) {
+                    if (onFail) onFail(); else showShareGuide(currentSharePlatform);
+                }
+            } else if (onFail) {
+                onFail();
+            } else {
+                showShareGuide(currentSharePlatform);
+            }
+        }
+
+        /* 原生 scheme 直达 App 分享界面；1.8s 未唤起（页面仍可见）回退系统面板/引导 */
+        let currentSharePlatform = 'wechat';
+        function nativeSchemeShare(platform, meta) {
+            currentSharePlatform = platform;
+            let scheme = '';
+            if (platform === 'qq') {
+                scheme = 'mqqapi://share/to_fri?src_type=web&version=1&file_type=infourl&share_id=1101683063&url=' + encodeURIComponent(meta.url) + '&title=' + encodeURIComponent(meta.title) + '&description=' + encodeURIComponent(meta.desc) + '&previewimageUrl=' + encodeURIComponent(meta.icon);
+            } else if (platform === 'douyin') {
+                scheme = 'snssdk1128://forward?url=' + encodeURIComponent(meta.url) + '&title=' + encodeURIComponent(meta.title);
+            } else if (platform === 'wechat') {
+                scheme = 'weixin://';
+            } else if (platform === 'xhs') {
+                scheme = 'xhsdiscover://';
+            }
+            if (scheme && typeof location !== 'undefined') location.href = scheme;
+            setTimeout(function () {
+                if (document.hidden) return; /* 已唤起 App，留在后台 */
+                systemShare({ title: meta.title, text: meta.desc, url: meta.url }, null);
+            }, 1800);
         }
 
         function showShareGuide(platform) {
