@@ -51,7 +51,7 @@
         .notice-container:hover { animation-play-state: paused; }
 
         /* ===== 游戏卡片 ===== */
-        #game-grid { --icon-size: 96px; }
+        #game-grid { --icon-size: 125px; } /* 固定 130%（基准 96px），不再提供缩放控件 */
         .icon-cell { width: var(--icon-size); height: var(--icon-size); transition: width .18s ease, height .18s ease; }
         .game-card::after {
             content: ''; position: absolute; inset: 0; border-radius: 1rem; pointer-events: none;
@@ -87,10 +87,6 @@
         .cmt-ava { flex: none; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.4); }
         .cmt-time { flex: none; font-size: 9px; color: #a78bfa; font-weight: 600; }
 
-        /* ===== 缩放滑杆 ===== */
-        input[type="range"].zoom { -webkit-appearance: none; appearance: none; height: 4px; border-radius: 99px; background: rgba(167,139,250,.35); outline: none; }
-        input[type="range"].zoom::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 13px; height: 13px; border-radius: 50%; background: linear-gradient(135deg,#fde047,#f59e0b); box-shadow: 0 0 6px rgba(245,158,11,.8); cursor: pointer; }
-
         /* ===== APP 横幅 ===== */
         .app-banner { position: relative; overflow: hidden; }
         .app-banner::before { content: ''; position: absolute; top: -60%; left: -30%; width: 60%; height: 220%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent); transform: rotate(18deg); animation: bannerSweep 3.2s ease-in-out infinite; }
@@ -108,17 +104,11 @@
         .cat-scroll { -webkit-overflow-scrolling: touch; overscroll-x: contain; }
         /* 点按反馈与选中抑制 */
         button, .cat-btn, .claim-btn, .game-card { touch-action: manipulation; }
-        .cat-btn, .claim-btn, .zoom-ctl { -webkit-user-select: none; user-select: none; }
+        .cat-btn, .claim-btn { -webkit-user-select: none; user-select: none; }
         .claim-btn:active { transform: scale(.97); }
-        /* 缩放控件：触屏加大点按目标 */
-        .zoom-ctl { width: 1.5rem; height: 1.5rem; }
-        .zoom-range { width: 4.5rem; }
         /* 弹窗：矮屏/横屏时内部滚动，防止溢出 */
         .modal-panel { max-height: 86vh; max-height: 86dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         @media (pointer: coarse) {
-            .zoom-ctl { width: 1.75rem; height: 1.75rem; }
-            .zoom-range { width: 5.5rem; }
-            input[type="range"].zoom::-webkit-slider-thumb { width: 18px; height: 18px; }
             /* iOS 聚焦输入框 ≥16px 才不会自动放大页面 */
             #game-id-input, #server-filter, #main-region-select, #sub-server-select { font-size: 16px; }
             .claim-btn { padding: 10px 0; }
@@ -203,13 +193,6 @@
         <main class="px-4 flex-1 relative z-10">
             <div class="flex items-center justify-between mb-2.5">
                 <h2 class="text-sm font-black text-purple-100 flex items-center gap-1.5">🎮 热门游戏福利 <span class="text-[10px] font-normal text-purple-300/70">共20款</span></h2>
-                <div class="flex items-center gap-1.5 bg-black/35 border border-purple-500/30 rounded-full pl-2 pr-2.5 py-1">
-                    <span class="text-[9px] text-purple-300 font-bold">图标</span>
-                    <button onclick="zoomBy(-8)" class="zoom-ctl rounded-full bg-purple-500/40 text-white text-[11px] font-black leading-none flex items-center justify-center hover:bg-purple-400/60 transition">−</button>
-                    <input id="zoom-range" type="range" min="64" max="150" value="96" class="zoom zoom-range" oninput="setIconSize(this.value)" aria-label="游戏图标大小">
-                    <button onclick="zoomBy(8)" class="zoom-ctl rounded-full bg-purple-500/40 text-white text-[11px] font-black leading-none flex items-center justify-center hover:bg-purple-400/60 transition">＋</button>
-                    <span id="zoom-label" class="text-[9px] text-yellow-400 font-black w-7 text-right">100%</span>
-                </div>
             </div>
             <div id="game-grid" class="grid grid-cols-2 gap-3 pb-5">
                 <div onclick="openModal('王者荣耀')" class="game-card group relative bg-white/5 backdrop-blur-md border border-purple-400/20 rounded-2xl pt-3 pb-3 px-2.5 flex flex-col items-center cursor-pointer transition duration-200 hover:border-yellow-400/70 hover:bg-white/10 active:scale-95" data-category="tencent">
@@ -576,23 +559,6 @@
             });
         }
 
-        /* ===== 图标缩放 ===== */
-        function setIconSize(px) {
-            px = Math.max(64, Math.min(150, parseInt(px, 10) || 96));
-            const grid = document.getElementById('game-grid');
-            if (grid) grid.style.setProperty('--icon-size', px + 'px');
-            const range = document.getElementById('zoom-range');
-            if (range) range.value = px;
-            const label = document.getElementById('zoom-label');
-            if (label) label.textContent = Math.round(px / 96 * 100) + '%';
-            try { localStorage.setItem('welfare-icon-size', String(px)); } catch (err) {}
-        }
-        function zoomBy(d) {
-            const range = document.getElementById('zoom-range');
-            const cur = range ? parseInt(range.value, 10) : 96;
-            setIconSize(cur + d);
-        }
-
         /* ===== 三级联动 ===== */
         function openModal(gameName) {
             currentGameName = gameName;
@@ -741,10 +707,6 @@
 
         /* ===== 初始化 ===== */
         (function init() {
-            try {
-                const saved = localStorage.getItem('welfare-icon-size');
-                setIconSize(saved ? parseInt(saved, 10) : 96);
-            } catch (err) { setIconSize(96); }
             countUp('stat-today', 128541, 1400);
             countUp('stat-total', 9872450, 1800);
             countUp('stat-online', 3271, 1200);
